@@ -30,6 +30,7 @@ async function run() {
     await client.connect();
 
     const newsBlogCollection = client.db("sportsNews").collection("newsBlog");
+    const wishlistCollection = client.db("sportsNews").collection("wishlist");
 
     // data add
     app.post('/addBlogs', async (req, res) => {
@@ -54,6 +55,30 @@ async function run() {
         res.send(result)
     })
 
+    // add data in wishlist
+    app.post('/addWishlist', async (req, res) => {
+        const newWishlist = req.body;
+        const result = await wishlistCollection.insertOne(newWishlist);
+        res.send(result)
+    })
+
+    // show wishlist data and email query
+    app.get('/wishlist', async (req, res) => {
+        console.log(req.query.email);
+        let query = {};
+        if (req.query.email) {
+            query = { email: req.query.email }
+        }
+        const result = await wishlistCollection.find(query).toArray();
+        res.send(result)
+    })
+    // delete wishlist data
+    app.delete('/wishlist/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await wishlistCollection.deleteOne(query);
+        res.send(result)
+    })
 
 
 
