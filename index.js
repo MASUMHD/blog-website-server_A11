@@ -33,6 +33,32 @@ async function run() {
     const wishlistCollection = client.db("sportsNews").collection("wishlist");
     // search
     await newsBlogCollection.createIndex({ title: 'text', short_description: 'text' })
+    // comment
+    const commentCollection = client.db("sportsNews").collection("comments");
+
+
+    // comment add
+    app.post('/comment', async (req, res) => {
+        const newComment = req.body;
+        console.log(newComment);
+        const result = await commentCollection.insertOne(newComment);
+        res.send(result)
+    })
+
+    // show comment data
+    // app.get('/comments', async (req, res) => {
+    //     const cursor = commentCollection.find();
+    //     const result = await cursor.toArray();
+    //     res.send(result)
+    // })
+
+    // show comment data on id
+    app.get('/comments', async (req, res) => {
+        const id = req.query.id;
+        const query = { id:  id };
+        const result = await commentCollection.find(query).toArray();
+        res.send(result)
+    })
 
     // data add
     app.post('/addBlogs', async (req, res) => {
@@ -75,6 +101,26 @@ async function run() {
         res.send(result)
     })
 
+    // update data
+    app.put('/allBlogs/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatedBlog = req.body;
+        const blog = {
+            $set: {
+                title: updatedBlog.title,
+                category: updatedBlog.category,
+                short_description: updatedBlog.short_description,
+                long_description: updatedBlog.long_description,
+                image_url: updatedBlog.image_url,
+            },
+        }
+        const result = await newsBlogCollection.updateOne(filter, blog, options);
+        res.send(result)
+        // console.log(result);
+    })
+
     // add data in wishlist
     app.post('/addWishlist', async (req, res) => {
         const newWishlist = req.body;
@@ -88,11 +134,14 @@ async function run() {
         // console.log(req.query.email);
         let query = {};
         if (req.query.email) {
-            query = { email: req.query.email }
+          query = { email: req.query.email }
         }
         const result = await wishlistCollection.find(query).toArray();
         res.send(result)
     })
+
+    
+
     // delete wishlist data
     app.delete('/wishlist/:id', async (req, res) => {
         const id = req.params.id;
