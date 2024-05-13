@@ -45,13 +45,6 @@ async function run() {
         res.send(result)
     })
 
-    // show comment data
-    // app.get('/comments', async (req, res) => {
-    //     const cursor = commentCollection.find();
-    //     const result = await cursor.toArray();
-    //     res.send(result)
-    // })
-
     // show comment data on id
     app.get('/comments', async (req, res) => {
         const id = req.query.id;
