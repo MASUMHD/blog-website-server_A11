@@ -19,7 +19,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
+    strict: false,
     deprecationErrors: true,
   }
 });
@@ -31,6 +31,8 @@ async function run() {
 
     const newsBlogCollection = client.db("sportsNews").collection("newsBlog");
     const wishlistCollection = client.db("sportsNews").collection("wishlist");
+    // search
+    await newsBlogCollection.createIndex({ title: 'text', short_description: 'text' })
 
     // data add
     app.post('/addBlogs', async (req, res) => {
@@ -42,15 +44,33 @@ async function run() {
 
     // data show
     app.get('/allBlogs', async (req, res) => {
-        const cursor = newsBlogCollection.find();
+      const cursor = newsBlogCollection.find();
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+
+    // search
+    app.get('/all', async (req, res) => {
+      try{
+        const query = req.query.search;
+        const cursor = newsBlogCollection.find({$text: {$search: query}});
         const result = await cursor.toArray();
         res.send(result)
+        
+      }
+      catch(err){
+        console.log(err)
+        res.status(500).json({message: 'Server error'})
+      }
+      
     })
 
     // one data show
     app.get('/allBlogs/:id', async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
+        // console.log(query);
         const result = await newsBlogCollection.findOne(query);
         res.send(result)
     })
@@ -58,6 +78,7 @@ async function run() {
     // add data in wishlist
     app.post('/addWishlist', async (req, res) => {
         const newWishlist = req.body;
+        console.log(newWishlist);
         const result = await wishlistCollection.insertOne(newWishlist);
         res.send(result)
     })
