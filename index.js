@@ -10,7 +10,9 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://news-blog-efa6a.web.app',
+    'https://news-blog-efa6a.firebaseapp.com',
   ],
   credentials: true
 }));
@@ -54,11 +56,18 @@ const verifyToken = (req, res, next) => {
 
 }
 
+const cookeOptions = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+  secure: process.env.NODE_ENV === 'production' ? true : false,
+  
+}
+
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const newsBlogCollection = client.db("sportsNews").collection("newsBlog");
     const wishlistCollection = client.db("sportsNews").collection("wishlist");
@@ -75,11 +84,7 @@ async function run() {
       console.log('user for token:',user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
 
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none'
-      })
+      res.cookie('token', token, cookeOptions )
       .send({success: true})
     })
 
@@ -87,7 +92,7 @@ async function run() {
     app.post('/logout', async(req, res) => {
       const user = req.body;
       console.log('user for logout:',user);
-      res.clearCookie('token', {maxAge: 0}).send({success: true})
+      res.clearCookie('token', {...cookeOptions, maxAge: 0}).send({success: true})
     })
 
 
@@ -208,7 +213,7 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
